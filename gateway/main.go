@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	addr             = common.EnvString("HTTP_ADDR", ":8080")
+	httpAddr         = common.EnvString("HTTP_ADDR", ":8080")
 	orderServiceAddr = common.EnvString("ORDER_SERVICE_ADDR", "localhost:8081")
 )
 
@@ -31,9 +31,9 @@ func main() {
 	handler := NewHandler(c)
 	handler.registerRoutes(mux)
 
-	log.Printf("Starting HTTP server at %s", addr)
+	log.Printf("Starting HTTP server at %s", httpAddr)
 
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(httpAddr, mux); err != nil {
 		log.Fatal("Failed to start http server:", err)
 	}
 }
