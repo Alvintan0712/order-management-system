@@ -17,7 +17,12 @@ var (
 )
 
 func main() {
-	conn, err := grpc.NewClient(orderServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	var opts []grpc.DialOption
+
+	// for tcp only connection
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	conn, err := grpc.NewClient(orderServiceAddr, opts...)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
@@ -25,10 +30,10 @@ func main() {
 
 	log.Println("Dialing order service at", orderServiceAddr)
 
-	c := pb.NewOrderServiceClient(conn)
+	orderClient := pb.NewOrderServiceClient(conn)
 
 	mux := http.NewServeMux()
-	handler := NewHandler(c)
+	handler := NewHandler(orderClient)
 	handler.registerRoutes(mux)
 
 	log.Printf("Starting HTTP server at %s", httpAddr)
