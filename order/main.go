@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strconv"
+	"time"
 
 	"example.com/oms/common"
-	capi "github.com/hashicorp/consul/api"
+	"example.com/oms/common/discovery/consul"
 	_ "github.com/joho/godotenv/autoload"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var (
@@ -24,12 +22,32 @@ var (
 )
 
 func main() {
-	config := capi.DefaultConfig()
-	config.Address = consulAddr
-	consulClient, err := capi.NewClient(config)
+	registry, err := consul.NewRegistry(consulAddr, serviceHost, servicePort, serviceName)
 	if err != nil {
 		log.Fatalf("Error creating Consul client: %v", err)
 	}
+
+	err = registry.Register(context.Background(), serviceId, serviceName, serviceHost, servicePort)
+	if err != nil {
+		log.Fatalf("Error registering service with Consul: %v", err)
+		panic(err)
+	}
+	defer registry.Deregister(context.Background(), serviceId, serviceName)
+
+	go func() {
+		for {
+			if err := registry.HealthCheck(serviceId, serviceName); err != nil {
+				log.Fatalf("Failed to health check: %v", err)
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+	// healthServer := health.NewServer()
+	repository := NewRepository()
+	service := NewService(repository)
 
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", serviceHost, servicePort))
 	if err != nil {
@@ -37,38 +55,9 @@ func main() {
 	}
 	defer listen.Close()
 
-	portNumber, err := strconv.Atoi(servicePort)
-	if err != nil {
-		log.Fatalf("Invalid port: %v", err)
-	}
-
-	var opts []grpc.ServerOption
-	agentServiceRegistration := &capi.AgentServiceRegistration{
-		ID:      serviceId,
-		Name:    serviceName,
-		Address: serviceHost,
-		Port:    portNumber,
-		Check: &capi.AgentServiceCheck{
-			GRPC:       fmt.Sprintf("%s:%s", serviceHost, servicePort),
-			Interval:   "10s",
-			Timeout:    "30s",
-			GRPCUseTLS: false,
-		},
-	}
-
-	err = consulClient.Agent().ServiceRegister(agentServiceRegistration)
-	if err != nil {
-		log.Fatalf("Error registering service with Consul: %v", err)
-	}
-
-	grpcServer := grpc.NewServer(opts...)
-	healthServer := health.NewServer()
-	repository := NewRepository()
-	service := NewService(repository)
-
 	NewGRPCHandler(grpcServer, service)
-	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
+	// grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	// healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	service.CreateOrder(context.Background())
 
@@ -77,10 +66,4 @@ func main() {
 	if err := grpcServer.Serve(listen); err != nil {
 		log.Fatal(err.Error())
 	}
-
-	err = consulClient.Agent().ServiceDeregister(serviceId)
-	if err != nil {
-		log.Printf("Error deregistering service: %v", err)
-	}
-	log.Println("Order service deregistered successfully.")
 }
