@@ -78,7 +78,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	err = consulClient.Agent().ServiceDeregister("order-service-id")
+	err = consulClient.Agent().ServiceDeregister(serviceId)
 	if err != nil {
 		log.Printf("Error deregistering service: %v", err)
 	}
