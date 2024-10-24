@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"example.com/oms/common"
 	pb "example.com/oms/common/api"
 )
 
@@ -15,10 +16,38 @@ func NewService(repository OrderRepository) *service {
 	return &service{repository}
 }
 
-func (s *service) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest) (*pb.Order, error) {
-	log.Println("New order received!")
-	order := &pb.Order{
-		Id: "42",
+func (s *service) CreateOrder(ctx context.Context) error {
+	return nil
+}
+
+func (s *service) ValidateOrder(ctx context.Context, r *pb.CreateOrderRequest) error {
+	if len(r.Items) == 0 {
+		return common.ErrNoItems
 	}
-	return order, nil
+
+	items := mergeItemsQuantities(r.Items)
+	log.Println(items)
+
+	return nil
+}
+
+func mergeItemsQuantities(items []*pb.ItemsWithQuantity) []*pb.ItemsWithQuantity {
+	merged := make([]*pb.ItemsWithQuantity, 0)
+
+	for _, item := range items {
+		found := false
+		for _, finalItem := range merged {
+			if finalItem.Id == item.Id {
+				finalItem.Quantity += item.Quantity
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			merged = append(merged, item)
+		}
+	}
+
+	return merged
 }

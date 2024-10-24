@@ -26,9 +26,9 @@ func main() {
 	grpcServer := grpc.NewServer(opts...)
 	repository := NewRepository()
 	service := NewService(repository)
-	NewGRPCHandler(grpcServer)
+	NewGRPCHandler(grpcServer, service)
 
-	service.CreateOrder(context.Background(), nil)
+	service.CreateOrder(context.Background())
 
 	log.Println("Order server started at", grpcAddr)
 

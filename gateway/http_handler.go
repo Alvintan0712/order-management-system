@@ -1,11 +1,13 @@
 package main
 
 import (
-	"log"
+	"errors"
 	"net/http"
 
 	"example.com/oms/common"
 	pb "example.com/oms/common/api"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type handler struct {
@@ -28,13 +30,44 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Forward to order service")
-	_, err := h.orderClient.CreateOrder(r.Context(), &pb.CreateOrderRequest{
+	if err := validateItems(items); err != nil {
+		common.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	order, err := h.orderClient.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerId: customerId,
 		Items:      items,
 	})
 
-	if err != nil {
-		log.Fatal("Something wrong:", err)
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		if rStatus.Code() != codes.InvalidArgument {
+			common.WriteError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
+
+	common.WriteJSON(w, http.StatusOK, order)
+}
+
+func validateItems(items []*pb.ItemsWithQuantity) error {
+	if len(items) == 0 {
+		return common.ErrNoItems
+	}
+
+	for _, i := range items {
+		if i.Id == "" {
+			return errors.New("item Id is required")
+		}
+
+		if i.Quantity <= 0 {
+			return errors.New("item must have a valid quantity")
+		}
+	}
+
+	return nil
 }

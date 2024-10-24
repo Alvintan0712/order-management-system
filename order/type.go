@@ -1,9 +1,14 @@
 package main
 
-import "context"
+import (
+	"context"
+
+	pb "example.com/oms/common/api"
+)
 
 type OrderService interface {
 	CreateOrder(context.Context) error
+	ValidateOrder(context.Context, *pb.CreateOrderRequest) error
 }
 
 type OrderRepository interface {
