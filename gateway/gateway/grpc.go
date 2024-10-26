@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"log"
+	"time"
 
 	pb "example.com/oms/common/api"
 	"example.com/oms/common/discovery"
@@ -10,13 +11,10 @@ import (
 
 type orderGateway struct {
 	registry discovery.Registry
+	client   pb.OrderServiceClient
 }
 
-func NewOrderGateway(registry discovery.Registry) *orderGateway {
-	return &orderGateway{registry}
-}
-
-func (g *orderGateway) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest) (*pb.Order, error) {
+func NewOrderGateway(ctx context.Context, registry discovery.Registry) *orderGateway {
 	conn, err := discovery.ConnectService(ctx, "order-service", g.registry)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
@@ -24,5 +22,16 @@ func (g *orderGateway) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest
 
 	client := pb.NewOrderServiceClient(conn)
 
-	return client.CreateOrder(ctx, r)
+	return &orderGateway{registry, client}
+}
+
+func (g *orderGateway) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest) (*pb.Order, error) {
+	start := time.Now()
+	order, err := g.client.CreateOrder(ctx, r)
+	log.Printf("client create order: %v", time.Since(start))
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
+	// return client.CreateOrder(ctx, r)
 }

@@ -52,7 +52,7 @@ func main() {
 	mux := http.NewServeMux()
 	logHandler := middleware.Adapt(mux, middleware.Log())
 
-	gateway := gateway.NewOrderGateway(registry)
+	gateway := gateway.NewOrderGateway(ctx, registry)
 
 	handler := NewHandler(gateway)
 	handler.registerRoutes(mux)

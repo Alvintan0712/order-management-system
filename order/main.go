@@ -44,8 +44,8 @@ func main() {
 		}
 	}()
 
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
+	// var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer()
 	repository := NewRepository()
 	service := NewService(repository)
 
