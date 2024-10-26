@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net/http"
+	"time"
 
 	"example.com/oms/common"
 	pb "example.com/oms/common/api"
@@ -37,10 +39,13 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	start := time.Now()
 	order, err := h.orderGateway.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerId: customerId,
 		Items:      items,
 	})
+	log.Printf("create order: %v\n", time.Since(start))
+
 	rStatus := status.Convert(err)
 	if rStatus != nil {
 		if rStatus.Code() != codes.InvalidArgument {

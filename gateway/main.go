@@ -10,6 +10,7 @@ import (
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	"example.com/oms/gateway/gateway"
+	"example.com/oms/gateway/middleware"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -49,6 +50,7 @@ func main() {
 	defer registry.Deregister(ctx, serviceId, serviceName)
 
 	mux := http.NewServeMux()
+	logHandler := middleware.Adapt(mux, middleware.Log())
 
 	gateway := gateway.NewOrderGateway(registry)
 
@@ -57,7 +59,7 @@ func main() {
 
 	log.Printf("Starting %s HTTP server at %s", serviceId, httpAddr)
 
-	if err := http.ListenAndServe(httpAddr, mux); err != nil {
+	if err := http.ListenAndServe(httpAddr, logHandler); err != nil {
 		log.Fatal("Failed to start http server:", err)
 	}
 }
