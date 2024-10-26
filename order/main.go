@@ -45,7 +45,6 @@ func main() {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	// healthServer := health.NewServer()
 	repository := NewRepository()
 	service := NewService(repository)
 
@@ -56,8 +55,6 @@ func main() {
 	defer listen.Close()
 
 	NewGRPCHandler(grpcServer, service)
-	// grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
-	// healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	service.CreateOrder(context.Background())
 
