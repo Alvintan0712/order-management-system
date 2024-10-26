@@ -14,14 +14,7 @@ type orderGateway struct {
 	client   pb.OrderServiceClient
 }
 
-func NewOrderGateway(ctx context.Context, registry discovery.Registry) *orderGateway {
-	conn, err := discovery.ConnectService(ctx, "order-service", registry)
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-
-	client := pb.NewOrderServiceClient(conn)
-
+func NewOrderGateway(registry discovery.Registry, client pb.OrderServiceClient) *orderGateway {
 	return &orderGateway{registry, client}
 }
 
@@ -33,5 +26,4 @@ func (g *orderGateway) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest
 		return nil, err
 	}
 	return order, nil
-	// return client.CreateOrder(ctx, r)
 }
