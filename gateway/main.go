@@ -55,7 +55,7 @@ func main() {
 	handler := NewHandler(gateway)
 	handler.registerRoutes(mux)
 
-	log.Printf("Starting HTTP server at %s", httpAddr)
+	log.Printf("Starting %s HTTP server at %s", serviceId, httpAddr)
 
 	if err := http.ListenAndServe(httpAddr, mux); err != nil {
 		log.Fatal("Failed to start http server:", err)

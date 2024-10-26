@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"example.com/oms/common"
+	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	_ "github.com/joho/godotenv/autoload"
 	"google.golang.org/grpc"
@@ -17,7 +18,6 @@ var (
 	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
 	serviceHost = common.EnvString("SERVICE_HOST", "localhost")
 	servicePort = common.EnvString("SERVICE_PORT", "8081")
-	serviceId   = common.EnvString("SERVICE_ID", "order-service-id")
 	serviceName = common.EnvString("SERVICE_NAME", "order-service")
 )
 
@@ -27,6 +27,7 @@ func main() {
 		log.Fatalf("Error creating Consul client: %v", err)
 	}
 
+	serviceId := discovery.GenerateInstanceId(serviceName)
 	err = registry.Register(context.Background(), serviceId, serviceName, serviceHost, servicePort)
 	if err != nil {
 		log.Fatalf("Error registering service with Consul: %v", err)
@@ -56,9 +57,7 @@ func main() {
 
 	NewGRPCHandler(grpcServer, service)
 
-	service.CreateOrder(context.Background())
-
-	log.Println("Order server started at", fmt.Sprintf("%s:%s", serviceHost, servicePort))
+	log.Printf("Order service %s started at %s:%s\n", serviceId, serviceHost, servicePort)
 
 	if err := grpcServer.Serve(listen); err != nil {
 		log.Fatal(err.Error())

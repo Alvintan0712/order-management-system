@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"example.com/oms/common"
 	pb "example.com/oms/common/api"
@@ -16,8 +17,24 @@ func NewService(repository OrderRepository) *service {
 	return &service{repository}
 }
 
-func (s *service) CreateOrder(ctx context.Context) error {
-	return nil
+func (s *service) CreateOrder(ctx context.Context, r *pb.CreateOrderRequest) (*pb.Order, error) {
+	items := make([]*pb.Item, len(r.Items))
+	for i, item := range r.Items {
+		items[i] = &pb.Item{
+			Id:       strconv.Itoa(i),
+			Name:     item.Id,
+			Quantity: item.Quantity,
+			PriceId:  strconv.Itoa(i),
+		}
+	}
+
+	order := &pb.Order{
+		Id:         "42",
+		CustomerId: r.CustomerId,
+		Status:     "pending",
+		Items:      items,
+	}
+	return order, nil
 }
 
 func (s *service) ValidateOrder(ctx context.Context, r *pb.CreateOrderRequest) error {
