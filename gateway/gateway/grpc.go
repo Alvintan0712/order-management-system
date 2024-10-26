@@ -15,7 +15,7 @@ type orderGateway struct {
 }
 
 func NewOrderGateway(ctx context.Context, registry discovery.Registry) *orderGateway {
-	conn, err := discovery.ConnectService(ctx, "order-service", g.registry)
+	conn, err := discovery.ConnectService(ctx, "order-service", registry)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
 	}
