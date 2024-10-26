@@ -6,16 +6,17 @@ import (
 
 	"example.com/oms/common"
 	pb "example.com/oms/common/api"
+	"example.com/oms/gateway/gateway"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type handler struct {
-	orderClient pb.OrderServiceClient
+	orderGateway gateway.OrderGateway
 }
 
-func NewHandler(orderClient pb.OrderServiceClient) *handler {
-	return &handler{orderClient}
+func NewHandler(orderGateway gateway.OrderGateway) *handler {
+	return &handler{orderGateway}
 }
 
 func (h *handler) registerRoutes(mux *http.ServeMux) {
@@ -24,6 +25,7 @@ func (h *handler) registerRoutes(mux *http.ServeMux) {
 
 func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	customerId := r.PathValue("customerId")
+
 	var items []*pb.ItemsWithQuantity
 	if err := common.ReadJSON(r, &items); err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
@@ -35,11 +37,10 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := h.orderClient.CreateOrder(r.Context(), &pb.CreateOrderRequest{
+	order, err := h.orderGateway.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerId: customerId,
 		Items:      items,
 	})
-
 	rStatus := status.Convert(err)
 	if rStatus != nil {
 		if rStatus.Code() != codes.InvalidArgument {

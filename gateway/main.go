@@ -1,39 +1,58 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"example.com/oms/common"
-	pb "example.com/oms/common/api"
+	"example.com/oms/common/discovery"
+	"example.com/oms/common/discovery/consul"
+	"example.com/oms/gateway/gateway"
 	_ "github.com/joho/godotenv/autoload"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
-	httpAddr         = common.EnvString("HTTP_ADDR", ":8080")
-	orderServiceAddr = common.EnvString("ORDER_SERVICE_ADDR", "localhost:8081")
+	httpAddr    = common.EnvString("HTTP_ADDR", ":8080")
+	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
+	serviceName = common.EnvString("SERVICE_NAME", "gateway")
+	serviceHost = common.EnvString("SERVICE_HOST", "localhost")
+	servicePort = common.EnvString("SERVICE_PORT", "8080")
 )
 
 func main() {
-	var opts []grpc.DialOption
+	ctx := context.Background()
 
-	// for tcp only connection
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-	conn, err := grpc.NewClient(orderServiceAddr, opts...)
+	registry, err := consul.NewRegistry(consulAddr, serviceHost, servicePort, serviceName)
 	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
+		log.Fatal(err)
+		panic(err)
 	}
-	defer conn.Close()
 
-	log.Println("Dialing order service at", orderServiceAddr)
+	serviceId := discovery.GenerateInstanceId(serviceName)
+	err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
+	if err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
 
-	orderClient := pb.NewOrderServiceClient(conn)
+	go func() {
+		for {
+			if err := registry.HealthCheck(serviceId, serviceName); err != nil {
+				log.Fatalf("Failed to health check: %v\n", err)
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+
+	defer registry.Deregister(ctx, serviceId, serviceName)
 
 	mux := http.NewServeMux()
-	handler := NewHandler(orderClient)
+
+	gateway := gateway.NewOrderGateway(registry)
+
+	handler := NewHandler(gateway)
 	handler.registerRoutes(mux)
 
 	log.Printf("Starting HTTP server at %s", httpAddr)
