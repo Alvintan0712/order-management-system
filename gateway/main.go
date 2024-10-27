@@ -1,20 +1,10 @@
 package main
 
 import (
-	"context"
 	"log"
-	"net/http"
-	"os"
-	"time"
 
 	"example.com/oms/common"
-	pb "example.com/oms/common/api"
-	"example.com/oms/common/discovery"
-	"example.com/oms/common/discovery/consul"
-	"example.com/oms/gateway/gateway"
-	"example.com/oms/gateway/middleware"
 	_ "github.com/joho/godotenv/autoload"
-	"google.golang.org/grpc/grpclog"
 )
 
 var (
@@ -28,62 +18,18 @@ var (
 )
 
 func main() {
-	ctx := context.Background()
-	if debug {
-		grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stderr))
+	config := &Config{
+		httpAddr:   httpAddr,
+		consulAddr: consulAddr,
+		Name:       serviceName,
+		Host:       serviceHost,
+		Port:       servicePort,
 	}
 
-	registry, err := consul.NewRegistry(consulAddr, serviceHost, servicePort, serviceName)
-	if err != nil {
-		log.Fatal(err)
-		panic(err)
-	}
+	app := NewApp(config)
+	defer app.Close()
 
-	serviceId := discovery.GenerateInstanceId(serviceName)
-	err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
-	if err != nil {
-		log.Fatal(err)
-		panic(err)
-	}
-
-	go func() {
-		for {
-			if err := registry.HealthCheck(serviceId, serviceName); err != nil {
-				log.Fatalf("Failed to health check: %v\n", err)
-			}
-			time.Sleep(time.Second)
-		}
-	}()
-
-	defer registry.Deregister(ctx, serviceId, serviceName)
-
-	mux := http.NewServeMux()
-	logHandler := middleware.Adapt(mux, middleware.Log())
-
-	conn, err := discovery.ConnectService(ctx, "order-service", registry)
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	if debug {
-		go func() {
-			for {
-				log.Printf("state: %v\n", conn.GetState())
-				time.Sleep(time.Second * 10)
-			}
-		}()
-	}
-
-	client := pb.NewOrderServiceClient(conn)
-	gateway := gateway.NewOrderGateway(registry, client)
-
-	handler := NewHandler(gateway)
-	handler.registerRoutes(mux)
-
-	log.Printf("Starting %s HTTP server at %s", serviceId, httpAddr)
-
-	if err := http.ListenAndServe(httpAddr, logHandler); err != nil {
+	if err := app.Listen(); err != nil {
 		log.Fatal("Failed to start http server:", err)
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"errors"
@@ -8,24 +8,28 @@ import (
 
 	"example.com/oms/common"
 	pb "example.com/oms/common/api"
-	"example.com/oms/gateway/gateway"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type handler struct {
-	orderGateway gateway.OrderGateway
+type OrderHandler struct {
+	client pb.OrderServiceClient
 }
 
-func NewHandler(orderGateway gateway.OrderGateway) *handler {
-	return &handler{orderGateway}
+func registerRoutes(mux *http.ServeMux, handler *OrderHandler) {
+	mux.HandleFunc("POST /v1/customer/{customerId}/order", handler.CreateOrder)
 }
 
-func (h *handler) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/customer/{customerId}/order", h.HandleCreateOrder)
+func NewOrderHandler(mux *http.ServeMux, conn *grpc.ClientConn) *OrderHandler {
+	client := pb.NewOrderServiceClient(conn)
+	handler := &OrderHandler{client}
+	registerRoutes(mux, handler)
+
+	return handler
 }
 
-func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
+func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	customerId := r.PathValue("customerId")
 
 	var items []*pb.ItemsWithQuantity
@@ -40,7 +44,7 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start := time.Now()
-	order, err := h.orderGateway.CreateOrder(r.Context(), &pb.CreateOrderRequest{
+	order, err := h.client.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerId: customerId,
 		Items:      items,
 	})
