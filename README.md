@@ -27,7 +27,7 @@
 
 ## Architecture Design
 
-![order management system](architecture/oms.svg)
+![order management system](images/oms.svg)
 
 ## Tech Stack
 
