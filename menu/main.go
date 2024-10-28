@@ -19,13 +19,15 @@ import (
 var (
 	consulAddr  = common.EnvString("CONSUL_ADDR", "127.0.0.1:8500")
 	serviceHost = common.EnvString("SERVICE_HOST", "127.0.0.1")
-	servicePort = common.EnvString("SERVICE_PORT", "8081")
-	serviceName = common.EnvString("SERVICE_NAME", "order-service")
+	servicePort = common.EnvString("SERVICE_PORT", "8082")
+	serviceName = common.EnvString("SERVICE_NAME", "menu-service")
 
 	debug = common.EnvString("DEBUG", "false") == "true"
 )
 
 func main() {
+	ctx := context.Background()
+
 	if debug {
 		grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stderr))
 	}
@@ -36,12 +38,11 @@ func main() {
 	}
 
 	serviceId := discovery.GenerateInstanceId(serviceName)
-	err = registry.Register(context.Background(), serviceId, serviceName, serviceHost, servicePort)
+	err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
 	if err != nil {
-		log.Fatalf("Error registering service with Consul: %v", err)
-		panic(err)
+		log.Fatalf("Error registering service with Consul: %v\n", err)
 	}
-	defer registry.Deregister(context.Background(), serviceId, serviceName)
+	defer registry.Deregister(ctx, serviceId, serviceName)
 
 	go func() {
 		for {
@@ -64,7 +65,7 @@ func main() {
 	service := NewService(repository)
 	NewGRPCHandler(grpcServer, service)
 
-	log.Printf("Order service %s started at %s:%s\n", serviceId, serviceHost, servicePort)
+	log.Printf("Menu service %s started at %s:%s\n", serviceId, serviceHost, servicePort)
 
 	if err := grpcServer.Serve(listen); err != nil {
 		log.Fatal(err.Error())
