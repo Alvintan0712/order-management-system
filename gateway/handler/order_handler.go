@@ -17,16 +17,16 @@ type OrderHandler struct {
 	client pb.OrderServiceClient
 }
 
-func registerRoutes(mux *http.ServeMux, handler *OrderHandler) {
-	mux.HandleFunc("POST /v1/customer/{customerId}/order", handler.CreateOrder)
-}
-
 func NewOrderHandler(mux *http.ServeMux, conn *grpc.ClientConn) *OrderHandler {
 	client := pb.NewOrderServiceClient(conn)
 	handler := &OrderHandler{client}
-	registerRoutes(mux, handler)
+	handler.registerRoutes(mux)
 
 	return handler
+}
+
+func (h *OrderHandler) registerRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /v1/customer/{customerId}/order", h.CreateOrder)
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {

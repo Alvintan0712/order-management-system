@@ -1,9 +1,13 @@
 package main
 
-import "context"
+import (
+	"context"
+
+	pb "example.com/oms/common/api"
+)
 
 type MenuService interface {
-	CreateMenuItem(context.Context)
+	CreateMenuItem(context.Context, *pb.CreateMenuItemRequest) (*pb.MenuItem, error)
 }
 
 type MenuRepository interface {
