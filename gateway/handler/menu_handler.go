@@ -51,11 +51,6 @@ func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
 
 func (h *MenuHandler) ListMenuItems(w http.ResponseWriter, r *http.Request) {
 	itemList, err := h.client.ListMenuItems(r.Context(), nil)
-	if err != nil {
-		common.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
 	rStatus := status.Convert(err)
 	if rStatus != nil {
 		if rStatus.Code() != codes.InvalidArgument {
