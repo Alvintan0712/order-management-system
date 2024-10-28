@@ -7,6 +7,10 @@ import (
 	pb "example.com/oms/common/api"
 )
 
+type MenuService interface {
+	CreateMenuItem(context.Context, *pb.CreateMenuItemRequest) (*pb.MenuItem, error)
+}
+
 type service struct {
 	repository MenuRepository
 }

@@ -2,6 +2,10 @@ package main
 
 import "context"
 
+type MenuRepository interface {
+	Create(context.Context) error
+}
+
 type repository struct {
 }
 
