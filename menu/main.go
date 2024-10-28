@@ -61,7 +61,11 @@ func main() {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	repository := NewRepository()
+	repository, err := NewRepository()
+	if err != nil {
+		log.Fatalf("repository create failed: %v\n", err)
+	}
+
 	service := NewService(repository)
 	NewGRPCHandler(grpcServer, service)
 

@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option go_package = "example.com/oms/common/api";
 
 package api;
@@ -46,6 +48,11 @@ message CreateMenuItemRequest {
     string currency = 3;
 }
 
+message MenuItemList {
+    repeated MenuItem items = 1;
+}
+
 service MenuService {
     rpc CreateMenuItem(CreateMenuItemRequest) returns (MenuItem);
+    rpc ListMenuItems(google.protobuf.Empty) returns (MenuItemList);
 }

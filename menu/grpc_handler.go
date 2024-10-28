@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 
 	pb "example.com/oms/common/api"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type grpcHandler struct {
@@ -20,11 +20,22 @@ func NewGRPCHandler(grpcServer *grpc.Server, service MenuService) {
 }
 
 func (h *grpcHandler) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemRequest) (*pb.MenuItem, error) {
-	log.Printf("Create menu item, req: %v\n", r)
 	menu, err := h.service.CreateMenuItem(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
 	return menu, nil
+}
+
+func (h *grpcHandler) ListMenuItems(ctx context.Context, r *emptypb.Empty) (*pb.MenuItemList, error) {
+	items, err := h.service.ListMenuItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	itemList := &pb.MenuItemList{
+		Items: items,
+	}
+	return itemList, nil
 }

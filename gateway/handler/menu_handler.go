@@ -24,6 +24,7 @@ func NewMenuHandler(mux *http.ServeMux, conn *grpc.ClientConn) *MenuHandler {
 
 func (h *MenuHandler) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
+	mux.HandleFunc("GET /v1/menu", h.ListMenuItems)
 }
 
 func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
@@ -46,4 +47,25 @@ func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.WriteJSON(w, http.StatusOK, menu)
+}
+
+func (h *MenuHandler) ListMenuItems(w http.ResponseWriter, r *http.Request) {
+	itemList, err := h.client.ListMenuItems(r.Context(), nil)
+	if err != nil {
+		common.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		if rStatus.Code() != codes.InvalidArgument {
+			common.WriteError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	common.WriteJSON(w, http.StatusOK, itemList)
 }
