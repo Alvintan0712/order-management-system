@@ -22,7 +22,7 @@ type repository struct {
 
 func NewRepository() (*repository, error) {
 	// TODO: add database config in here
-	db, err := sql.Open("sqlite3", "./menu.db")
+	db, err := sql.Open("sqlite3", "./database/menu.db")
 	if err != nil {
 		return nil, err
 	}
