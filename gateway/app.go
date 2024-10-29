@@ -107,4 +107,10 @@ func (a *app) setupServices() {
 		log.Fatalf("menu service create failed: %v\n", err)
 	}
 	a.grpcServices = append(a.grpcServices, menuService.GRPCService)
+
+	stockService, err := service.NewStockService(a.context, a.mux, "stock-service", a.registry)
+	if err != nil {
+		log.Fatalf("stock service create failed: %v\n", err)
+	}
+	a.grpcServices = append(a.grpcServices, stockService.GRPCService)
 }

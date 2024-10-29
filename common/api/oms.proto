@@ -6,7 +6,7 @@ option go_package = "example.com/oms/common/api";
 
 package api;
 
-
+// Order
 message Order {
     string id = 1;
     string customerId = 2;
@@ -21,13 +21,6 @@ message Item {
     string priceId = 4;
 }
 
-message MenuItem {
-    string id = 1;
-    string name = 2;
-    int32 unitPrice = 3;
-    string currency = 4;
-}
-
 message ItemsWithQuantity {
     string id = 1;
     int32 quantity = 2;
@@ -40,6 +33,14 @@ message CreateOrderRequest {
 
 service OrderService {
     rpc CreateOrder(CreateOrderRequest) returns (Order);
+}
+
+// Menu
+message MenuItem {
+    string id = 1;
+    string name = 2;
+    int32 unitPrice = 3;
+    string currency = 4;
 }
 
 message CreateMenuItemRequest {
@@ -81,4 +82,30 @@ service MenuService {
     rpc UpdateMenuItem(UpdateMenuItemRequest) returns (UpdateMenuItemResponse);
     rpc DeleteMenuItem(DeleteMenuItemRequest) returns (DeleteMenuItemResponse);
     rpc ListMenuItems(google.protobuf.Empty) returns (MenuItemList);
+}
+
+// Stock
+message Stock {
+    string item_id = 1;
+    int32 quantity = 2;
+}
+
+message AddStockRequest {
+    string item_id = 1;
+    int32 quantity = 2;
+}
+
+message TakeStockRequest {
+    string item_id = 1;
+    int32 quantity = 2;
+}
+
+message GetStockRequest {
+    string item_id = 1;
+}
+
+service StockService {
+    rpc AddStock(AddStockRequest) returns (Stock);
+    rpc TakeStock(TakeStockRequest) returns (Stock);
+    rpc GetStock(GetStockRequest) returns (Stock);
 }

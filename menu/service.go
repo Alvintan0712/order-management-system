@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pb "example.com/oms/common/api"
+	rp "example.com/oms/common/repository"
 	"github.com/google/uuid"
 )
 
@@ -16,10 +17,10 @@ type MenuService interface {
 }
 
 type service struct {
-	repository Repository[*pb.MenuItem]
+	repository rp.Repository[*pb.MenuItem]
 }
 
-func NewService(repository Repository[*pb.MenuItem]) *service {
+func NewService(repository rp.Repository[*pb.MenuItem]) *service {
 	return &service{repository: repository}
 }
 

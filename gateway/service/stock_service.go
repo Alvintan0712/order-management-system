@@ -12,31 +12,31 @@ import (
 	"example.com/oms/gateway/handler"
 )
 
-type MenuService struct {
+type StockService struct {
 	GRPCService
-	client  *pb.MenuServiceClient
-	handler *handler.MenuHandler
+	client  *pb.StockServiceClient
+	handler *handler.StockHandler
 }
 
-func NewMenuService(ctx context.Context, mux *http.ServeMux, name string, gatewayRegistry *consul.Registry) (*MenuService, error) {
+func NewStockService(ctx context.Context, mux *http.ServeMux, name string, gatewayRegistry *consul.Registry) (*StockService, error) {
 	conn, err := discovery.ConnectService(ctx, name, gatewayRegistry)
 	if err != nil {
 		return nil, err
 	}
 
-	client := pb.NewMenuServiceClient(conn)
-	handler := handler.NewMenuHandler(mux, conn)
+	client := pb.NewStockServiceClient(conn)
+	handler := handler.NewStockHandler(mux, conn)
 
 	if debug {
 		go func() {
 			for {
-				log.Printf("menu service state: %v\n", conn.GetState())
+				log.Printf("stock service state: %v\n", conn.GetState())
 				time.Sleep(time.Second * 10)
 			}
 		}()
 	}
 
-	service := &MenuService{
+	service := &StockService{
 		GRPCService: GRPCService{
 			Service: Service{
 				Name: name,

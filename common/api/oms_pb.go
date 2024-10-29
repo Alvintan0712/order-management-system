@@ -8,3 +8,10 @@ func (item *MenuItem) ToDB() *MenuItemDB {
 		Currency:  item.Currency,
 	}
 }
+
+func (stock *Stock) ToDB() *StockDB {
+	return &StockDB{
+		ItemId:   stock.ItemId,
+		Quantity: stock.Quantity,
+	}
+}

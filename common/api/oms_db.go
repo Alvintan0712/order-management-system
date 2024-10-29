@@ -15,3 +15,15 @@ func (item *MenuItemDB) ToProto() *MenuItem {
 		Currency:  item.Currency,
 	}
 }
+
+type StockDB struct {
+	ItemId   string `db:"item_id"`
+	Quantity int32  `db:"quantity"`
+}
+
+func (stock *StockDB) ToProto() *Stock {
+	return &Stock{
+		ItemId:   stock.ItemId,
+		Quantity: stock.Quantity,
+	}
+}
