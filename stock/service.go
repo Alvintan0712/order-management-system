@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 
 	pb "example.com/oms/common/api"
 	rp "example.com/oms/common/repository"
@@ -22,13 +23,56 @@ func NewService(repository rp.Repository[*pb.Stock]) *service {
 }
 
 func (s *service) AddStock(ctx context.Context, r *pb.AddStockRequest) (*pb.Stock, error) {
-	return nil, nil
+	stock, err := s.repository.GetById(ctx, r.ItemId)
+	if err != nil {
+		return nil, err
+	}
+
+	if stock != nil {
+		stock.Quantity += r.Quantity
+		if err := s.repository.Update(ctx, stock); err != nil {
+			return nil, err
+		}
+	} else {
+		stock = &pb.Stock{
+			ItemId:   r.ItemId,
+			Quantity: r.Quantity,
+		}
+		if err := s.repository.Create(ctx, stock); err != nil {
+			return nil, err
+		}
+	}
+
+	return stock, nil
 }
 
 func (s *service) TakeStock(ctx context.Context, r *pb.TakeStockRequest) (*pb.Stock, error) {
-	return nil, nil
+	stock, err := s.repository.GetById(ctx, r.ItemId)
+	if err != nil {
+		return nil, err
+	}
+
+	if stock == nil {
+		return nil, errors.New("stock not enough")
+	}
+
+	if stock.Quantity < r.Quantity {
+		return nil, errors.New("stock not enough")
+	}
+
+	stock.Quantity -= r.Quantity
+	if err := s.repository.Update(ctx, stock); err != nil {
+		return nil, err
+	}
+
+	return stock, nil
 }
 
 func (s *service) GetStock(ctx context.Context, r *pb.GetStockRequest) (*pb.Stock, error) {
-	return nil, nil
+	stock, err := s.repository.GetById(ctx, r.ItemId)
+	if err != nil {
+		return nil, err
+	}
+
+	return stock, nil
 }

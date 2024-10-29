@@ -8,14 +8,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Repository[T any] interface {
-	Create(ctx context.Context, entity T) error
-	GetById(ctx context.Context, id string) (T, error)
-	Update(ctx context.Context, entity T) error
-	Delete(ctx context.Context, id string) error
-	List(ctx context.Context) ([]T, error)
-}
-
 type repository struct {
 	db *sqlx.DB
 }
@@ -100,7 +92,7 @@ func (r *repository) List(ctx context.Context) ([]*pb.MenuItem, error) {
 	`
 
 	var dbItems []*pb.MenuItemDB
-	err := r.db.Select(&dbItems, query)
+	err := r.db.SelectContext(ctx, &dbItems, query)
 	if err != nil {
 		return nil, err
 	}

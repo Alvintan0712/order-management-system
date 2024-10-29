@@ -30,6 +30,10 @@ func ConnectService(ctx context.Context, serviceName string, registry Registry) 
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
-	addr := addrs[rand.Intn(len(addrs))]
-	return grpc.NewClient(addr, opts...)
+	if len(addrs) > 0 {
+		addr := addrs[rand.Intn(len(addrs))]
+		return grpc.NewClient(addr, opts...)
+	}
+
+	return nil, nil
 }
