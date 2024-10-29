@@ -28,6 +28,41 @@ func (h *grpcHandler) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemRe
 	return menu, nil
 }
 
+func (h *grpcHandler) GetMenuItem(ctx context.Context, r *pb.GetMenuItemRequest) (*pb.MenuItem, error) {
+	menu, err := h.service.GetMenuItem(ctx, r.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return menu, nil
+}
+
+func (h *grpcHandler) UpdateMenuItem(ctx context.Context, r *pb.UpdateMenuItemRequest) (*pb.UpdateMenuItemResponse, error) {
+	err := h.service.UpdateMenuItem(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &pb.UpdateMenuItemResponse{
+		Message: "menu item updated successfully!",
+	}
+
+	return response, nil
+}
+
+func (h *grpcHandler) DeleteMenuItem(ctx context.Context, r *pb.DeleteMenuItemRequest) (*pb.DeleteMenuItemResponse, error) {
+	err := h.service.DeleteMenuItem(ctx, r.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &pb.DeleteMenuItemResponse{
+		Message: "menu item deleted successfully!",
+	}
+
+	return response, nil
+}
+
 func (h *grpcHandler) ListMenuItems(ctx context.Context, r *emptypb.Empty) (*pb.MenuItemList, error) {
 	items, err := h.service.ListMenuItems(ctx)
 	if err != nil {

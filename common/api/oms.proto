@@ -48,11 +48,37 @@ message CreateMenuItemRequest {
     string currency = 3;
 }
 
+message GetMenuItemRequest {
+    string id = 1;
+}
+
+message UpdateMenuItemRequest {
+    string id = 1;
+    string name = 2;
+    int32 unitPrice = 3;
+    string currency = 4;
+}
+
+message UpdateMenuItemResponse {
+    string message = 1;
+}
+
+message DeleteMenuItemRequest {
+    string id = 1;
+}    
+
+message DeleteMenuItemResponse {
+    string message = 1;
+}
+
 message MenuItemList {
     repeated MenuItem items = 1;
 }
 
 service MenuService {
     rpc CreateMenuItem(CreateMenuItemRequest) returns (MenuItem);
+    rpc GetMenuItem(GetMenuItemRequest) returns (MenuItem);
+    rpc UpdateMenuItem(UpdateMenuItemRequest) returns (UpdateMenuItemResponse);
+    rpc DeleteMenuItem(DeleteMenuItemRequest) returns (DeleteMenuItemResponse);
     rpc ListMenuItems(google.protobuf.Empty) returns (MenuItemList);
 }
