@@ -5,7 +5,10 @@ import (
 	"errors"
 
 	pb "example.com/oms/common/api"
+	"example.com/oms/common/discovery"
+	"example.com/oms/common/discovery/consul"
 	rp "example.com/oms/common/repository"
+	"google.golang.org/protobuf/proto"
 )
 
 type StockService interface {
@@ -13,14 +16,24 @@ type StockService interface {
 	TakeStock(context.Context, *pb.TakeStockRequest) (*pb.Stock, error)
 	GetStock(context.Context, *pb.GetStockRequest) (*pb.Stock, error)
 	ListStocks(context.Context) ([]*pb.Stock, error)
+	GetStocksWithMenuItem(context.Context) ([]*pb.StockMenuItem, error)
 }
 
 type service struct {
 	repository rp.Repository[*pb.Stock]
+
+	menuClient pb.MenuServiceClient
 }
 
-func NewService(repository rp.Repository[*pb.Stock]) *service {
-	return &service{repository: repository}
+func NewService(ctx context.Context, repository rp.Repository[*pb.Stock], registry *consul.Registry) (*service, error) {
+	conn, err := discovery.ConnectService(ctx, "menu-service", registry)
+	if err != nil {
+		return nil, err
+	}
+
+	menuClient := pb.NewMenuServiceClient(conn)
+
+	return &service{repository: repository, menuClient: menuClient}, nil
 }
 
 func (s *service) AddStock(ctx context.Context, r *pb.AddStockRequest) (*pb.Stock, error) {
@@ -85,4 +98,36 @@ func (s *service) ListStocks(ctx context.Context) ([]*pb.Stock, error) {
 	}
 
 	return stocks, nil
+}
+
+func (s *service) GetStocksWithMenuItem(ctx context.Context) ([]*pb.StockMenuItem, error) {
+	menuList, err := s.menuClient.ListMenuItems(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	stocks, err := s.repository.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	itemQuantityMap := make(map[string]int32)
+	for _, stock := range stocks {
+		itemQuantityMap[stock.ItemId] = stock.Quantity
+	}
+
+	stockMenuItems := make([]*pb.StockMenuItem, len(menuList.Items))
+	for i, menuItem := range menuList.Items {
+		quantity, ok := itemQuantityMap[menuItem.Id]
+		if !ok {
+			quantity = 0
+		}
+
+		stockMenuItems[i] = &pb.StockMenuItem{
+			ItemId:   menuItem.Id,
+			Quantity: proto.Int32(quantity),
+			Item:     menuItem,
+		}
+	}
+
+	return stockMenuItems, nil
 }

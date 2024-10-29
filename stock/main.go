@@ -66,7 +66,11 @@ func main() {
 		log.Fatalf("repository create failed: %v\n", err)
 	}
 
-	service := NewService(repository)
+	service, err := NewService(ctx, repository, registry)
+	if err != nil {
+		log.Fatalf("service create failed: %v\n", err)
+	}
+
 	NewGRPCHandler(grpcServer, service)
 
 	log.Printf("Stock service %s started at %s:%s\n", serviceId, serviceHost, servicePort)

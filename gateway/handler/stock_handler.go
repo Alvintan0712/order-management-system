@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 
 	"example.com/oms/common"
@@ -27,6 +29,7 @@ func (h *StockHandler) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /v1/stock/{id}", h.GetStock)
 	mux.HandleFunc("PUT /v1/stock/{id}", h.TakeStock)
 	mux.HandleFunc("GET /v1/stock", h.ListStocks)
+	mux.HandleFunc("GET /v1/stock/menu", h.ListStocksWithMenu)
 }
 
 func (h *StockHandler) AddStock(w http.ResponseWriter, r *http.Request) {
@@ -108,4 +111,24 @@ func (h *StockHandler) ListStocks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.WriteJSON(w, http.StatusOK, stockList)
+}
+
+func (h *StockHandler) ListStocksWithMenu(w http.ResponseWriter, r *http.Request) {
+	list, err := h.client.GetStocksWithMenuItem(r.Context(), nil)
+
+	jsonData, _ := json.Marshal(list)
+	log.Println(string(jsonData))
+
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		if rStatus.Code() != codes.InvalidArgument {
+			common.WriteError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	common.WriteJSON(w, http.StatusOK, list)
 }

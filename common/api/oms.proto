@@ -1,11 +1,12 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+// import "google/protobuf/wrappers.proto";
 
 option go_package = "example.com/oms/common/api";
 
 package api;
-
+  
 // Order
 message Order {
     string id = 1;
@@ -90,8 +91,18 @@ message Stock {
     int32 quantity = 2;
 }
 
+message StockMenuItem {
+    string item_id = 1;
+    optional int32 quantity = 2;
+    MenuItem item = 3;
+}
+
 message StockList {
     repeated Stock stocks = 1;
+}
+
+message StockMenuItemList {
+    repeated StockMenuItem items = 1;
 }
 
 message AddStockRequest {
@@ -113,4 +124,5 @@ service StockService {
     rpc TakeStock(TakeStockRequest) returns (Stock);
     rpc GetStock(GetStockRequest) returns (Stock);
     rpc ListStocks(google.protobuf.Empty) returns(StockList);
+    rpc GetStocksWithMenuItem(google.protobuf.Empty) returns(StockMenuItemList);
 }

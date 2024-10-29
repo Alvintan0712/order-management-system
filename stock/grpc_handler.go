@@ -44,3 +44,16 @@ func (h *grpcHandler) ListStocks(ctx context.Context, r *emptypb.Empty) (*pb.Sto
 
 	return stockList, nil
 }
+
+func (h *grpcHandler) GetStocksWithMenuItem(ctx context.Context, r *emptypb.Empty) (*pb.StockMenuItemList, error) {
+	stockMenuItems, err := h.service.GetStocksWithMenuItem(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	list := &pb.StockMenuItemList{
+		Items: stockMenuItems,
+	}
+
+	return list, nil
+}
