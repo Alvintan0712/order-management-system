@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "example.com/oms/common/api"
 )
@@ -29,4 +30,17 @@ func (h *grpcHandler) TakeStock(ctx context.Context, r *pb.TakeStockRequest) (*p
 
 func (h *grpcHandler) GetStock(ctx context.Context, r *pb.GetStockRequest) (*pb.Stock, error) {
 	return h.service.GetStock(ctx, r)
+}
+
+func (h *grpcHandler) ListStocks(ctx context.Context, r *emptypb.Empty) (*pb.StockList, error) {
+	stocks, err := h.service.ListStocks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stockList := &pb.StockList{
+		Stocks: stocks,
+	}
+
+	return stockList, nil
 }

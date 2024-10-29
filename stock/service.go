@@ -12,6 +12,7 @@ type StockService interface {
 	AddStock(context.Context, *pb.AddStockRequest) (*pb.Stock, error)
 	TakeStock(context.Context, *pb.TakeStockRequest) (*pb.Stock, error)
 	GetStock(context.Context, *pb.GetStockRequest) (*pb.Stock, error)
+	ListStocks(context.Context) ([]*pb.Stock, error)
 }
 
 type service struct {
@@ -75,4 +76,13 @@ func (s *service) GetStock(ctx context.Context, r *pb.GetStockRequest) (*pb.Stoc
 	}
 
 	return stock, nil
+}
+
+func (s *service) ListStocks(ctx context.Context) ([]*pb.Stock, error) {
+	stocks, err := s.repository.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return stocks, nil
 }

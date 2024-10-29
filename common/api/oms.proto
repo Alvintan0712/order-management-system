@@ -43,6 +43,10 @@ message MenuItem {
     string currency = 4;
 }
 
+message MenuItemList {
+    repeated MenuItem items = 1;
+}
+
 message CreateMenuItemRequest {
     string name = 1;
     int32 unitPrice = 2;
@@ -72,10 +76,6 @@ message DeleteMenuItemResponse {
     string message = 1;
 }
 
-message MenuItemList {
-    repeated MenuItem items = 1;
-}
-
 service MenuService {
     rpc CreateMenuItem(CreateMenuItemRequest) returns (MenuItem);
     rpc GetMenuItem(GetMenuItemRequest) returns (MenuItem);
@@ -88,6 +88,10 @@ service MenuService {
 message Stock {
     string item_id = 1;
     int32 quantity = 2;
+}
+
+message StockList {
+    repeated Stock stocks = 1;
 }
 
 message AddStockRequest {
@@ -108,4 +112,5 @@ service StockService {
     rpc AddStock(AddStockRequest) returns (Stock);
     rpc TakeStock(TakeStockRequest) returns (Stock);
     rpc GetStock(GetStockRequest) returns (Stock);
+    rpc ListStocks(google.protobuf.Empty) returns(StockList);
 }

@@ -26,6 +26,7 @@ func (h *StockHandler) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /v1/stock", h.AddStock)
 	mux.HandleFunc("GET /v1/stock/{id}", h.GetStock)
 	mux.HandleFunc("PUT /v1/stock/{id}", h.TakeStock)
+	mux.HandleFunc("GET /v1/stock", h.ListStocks)
 }
 
 func (h *StockHandler) AddStock(w http.ResponseWriter, r *http.Request) {
@@ -91,4 +92,20 @@ func (h *StockHandler) TakeStock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.WriteJSON(w, http.StatusOK, response)
+}
+
+func (h *StockHandler) ListStocks(w http.ResponseWriter, r *http.Request) {
+	stockList, err := h.client.ListStocks(r.Context(), nil)
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		if rStatus.Code() != codes.InvalidArgument {
+			common.WriteError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	common.WriteJSON(w, http.StatusOK, stockList)
 }
