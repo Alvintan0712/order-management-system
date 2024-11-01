@@ -96,6 +96,12 @@ func (a *app) setupMiddleware() {
 }
 
 func (a *app) setupServices() {
+	coordinatorService, err := service.NewCoordinatorService(a.context, a.mux, "coordinator", a.registry)
+	if err != nil {
+		log.Fatalf("coordinator service create failed: %v\n", err)
+	}
+	a.grpcServices = append(a.grpcServices, coordinatorService.GRPCService)
+
 	orderService, err := service.NewOrderService(a.context, a.mux, "order-service", a.registry)
 	if err != nil {
 		log.Fatalf("order service create failed: %v\n", err)

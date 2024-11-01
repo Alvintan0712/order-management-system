@@ -23,6 +23,12 @@
    consul agent -dev
    ```
 
+### Database
+
+1. Install Sqlite3
+2. cd database directory in each services.
+3. Execute `sqlite3 <service name>.db < script.sql`
+
 ### Application
 
 ## Architecture Design
@@ -35,6 +41,7 @@
 - Air (hot reload)
 - Consul (Service Discovery)
 - gRPC
+- DTM (Distributed Transaction Framework)
 
 # References
 

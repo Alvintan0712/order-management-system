@@ -1,12 +1,11 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
-// import "google/protobuf/wrappers.proto";
 
 option go_package = "example.com/oms/common/api";
 
 package api;
-  
+
 // Order
 message Order {
     string id = 1;

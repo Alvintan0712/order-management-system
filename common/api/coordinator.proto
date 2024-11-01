@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "example.com/oms/common/api";
+
+package api;
+
+message CreateMenuItemWithStockRequest {
+    string name = 1;
+    int32 unitPrice = 2;
+    string currency = 3;
+}
+
+message CreateMenuItemResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+service CoordinatorService {
+    rpc CreateMenuItem(CreateMenuItemWithStockRequest) returns (CreateMenuItemResponse);
+}

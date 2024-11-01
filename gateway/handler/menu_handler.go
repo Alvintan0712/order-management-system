@@ -23,7 +23,7 @@ func NewMenuHandler(mux *http.ServeMux, conn *grpc.ClientConn) *MenuHandler {
 }
 
 func (h *MenuHandler) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
+	// mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
 	mux.HandleFunc("GET /v1/menu/{id}", h.GetMenuItem)
 	mux.HandleFunc("PUT /v1/menu/{id}", h.UpdateMenuItem)
 	mux.HandleFunc("DELETE /v1/menu/{id}", h.DeleteMenuItem)
