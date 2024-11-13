@@ -19,10 +19,10 @@ func NewGRPCHandler(grpcServer *grpc.Server, service CoordinatorService) {
 }
 
 func (h *grpcHandler) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemWithStockRequest) (*pb.CreateMenuItemResponse, error) {
-	response := &pb.CreateMenuItemResponse{
-		Success: true,
-		Message: "Create menu item success",
+	resp, err := h.service.CreateMenuItemWithStock(ctx, r)
+	if err != nil {
+		return nil, err
 	}
 
-	return response, nil
+	return resp, nil
 }

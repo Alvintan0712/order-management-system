@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"example.com/oms/common"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 )
 
 var (
@@ -26,7 +28,7 @@ func main() {
 	ctx := context.Background()
 
 	if debug {
-		//
+		grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stderr))
 	}
 
 	registry, err := consul.NewRegistry(consulAddr, serviceHost, servicePort, serviceName)
@@ -58,7 +60,11 @@ func main() {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	service := NewService()
+	service, err := NewService(ctx, registry)
+	if err != nil {
+		log.Fatalf("service create failed: %v\n", err)
+	}
+
 	NewGRPCHandler(grpcServer, service)
 
 	log.Printf("Coordinator %s started at %s:%s\n", serviceId, serviceHost, servicePort)

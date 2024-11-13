@@ -41,7 +41,6 @@
 - Air (hot reload)
 - Consul (Service Discovery)
 - gRPC
-- DTM (Distributed Transaction Framework)
 
 # References
 
