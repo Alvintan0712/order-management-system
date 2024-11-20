@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  consul:
+    image: hashicorp/consul:latest
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: "consul agent -dev -client 0.0.0.0"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - CONSUL_ADDR=http://consul:8500

@@ -72,9 +72,15 @@ func (a *app) registerServer() {
 		log.Fatalf("error in create new client: %v\n", err)
 	}
 
-	err = registry.Register(a.context, a.config.Id, a.config.Name, a.config.Host, a.config.Port)
-	if err != nil {
-		log.Fatalf("error in register server: %v\n", err)
+	for {
+		err = registry.Register(a.context, a.config.Id, a.config.Name, a.config.Host, a.config.Port)
+		if err != nil {
+			log.Printf("error in register server: %v\n", err)
+			time.Sleep(time.Second)
+		} else {
+			log.Printf("server registered\n")
+			break
+		}
 	}
 
 	// health check
