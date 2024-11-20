@@ -8,6 +8,17 @@ services:
       - "8600:8600/udp"
     command: "consul agent -dev -client 0.0.0.0"
 
+  coordinator:
+    build:
+      context: .
+      dockerfile: coordinator/Dockerfile
+    ports:
+      - "8800:8800"
+    environment:
+      - CONSUL_ADDR=http://consul:8500
+      - SERVICE_HOST=coordinator
+      - DEBUG=true
+
   gateway:
     build:
       context: .
@@ -16,3 +27,46 @@ services:
       - "8000:8080"
     environment:
       - CONSUL_ADDR=http://consul:8500
+      - SERVICE_NAME=gateway
+      - SERVICE_HOST=127.0.0.1
+      - SERVICE_PORT=8080
+      - DEBUG=false
+
+  order:
+    build:
+      context: .
+      dockerfile: order/Dockerfile
+    ports:
+      - "8001:8081"
+    environment:
+      - CONSUL_ADDR=http://consul:8500
+      - SERVICE_NAME=order-service
+      - SERVICE_HOST=order
+      - SERVICE_PORT=8081
+      - DEBUG=false
+
+  menu:
+    build:
+      context: .
+      dockerfile: menu/Dockerfile
+    ports:
+      - "8002:8082"
+    environment:
+      - CONSUL_ADDR=http://consul:8500
+      - SERVICE_NAME=menu-service
+      - SERVICE_HOST=menu
+      - SERVICE_PORT=8082
+      - DEBUG=true
+    
+  stock:
+    build:
+      context: .
+      dockerfile: stock/Dockerfile
+    ports:
+      - "8003:8083"
+    environment:
+      - CONSUL_ADDR=http://consul:8500
+      - SERVICE_NAME=stock-service
+      - SERVICE_HOST=stock
+      - SERVICE_PORT=8083
+      - DEBUG=false

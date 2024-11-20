@@ -26,6 +26,8 @@ var (
 )
 
 func main() {
+	ctx := context.Background()
+
 	if debug {
 		grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stderr))
 	}
@@ -36,12 +38,15 @@ func main() {
 	}
 
 	serviceId := discovery.GenerateInstanceId(serviceName)
-	err = registry.Register(context.Background(), serviceId, serviceName, serviceHost, servicePort)
-	if err != nil {
-		log.Fatalf("Error registering service with Consul: %v", err)
-		panic(err)
+	for {
+		err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
+		if err != nil {
+			log.Printf("Error registering service with Consul: %v", err)
+		} else {
+			break
+		}
 	}
-	defer registry.Deregister(context.Background(), serviceId, serviceName)
+	defer registry.Deregister(ctx, serviceId, serviceName)
 
 	go func() {
 		for {

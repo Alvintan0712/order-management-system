@@ -38,9 +38,14 @@ func main() {
 	}
 
 	serviceId := discovery.GenerateInstanceId(serviceName)
-	err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
-	if err != nil {
-		log.Fatalf("Error registering service with Consul: %v\n", err)
+	for {
+		err = registry.Register(ctx, serviceId, serviceName, serviceHost, servicePort)
+		if err != nil {
+			log.Printf("Error registering service with Consul: %v", err)
+			time.Sleep(time.Second)
+		} else {
+			break
+		}
 	}
 	defer registry.Deregister(ctx, serviceId, serviceName)
 
@@ -53,6 +58,7 @@ func main() {
 		}
 	}()
 
+	log.Printf("Start listen %s:%s\n", serviceHost, servicePort)
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", serviceHost, servicePort))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

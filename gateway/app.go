@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -53,7 +54,8 @@ func NewApp(config *Config) *app {
 
 func (a *app) Listen() error {
 	log.Printf("Starting %s HTTP server at %s", a.config.Id, a.config.httpAddr)
-	if err := http.ListenAndServe(a.config.httpAddr, a.handler); err != nil {
+	port := fmt.Sprintf(":%v", a.config.Port)
+	if err := http.ListenAndServe(port, a.handler); err != nil {
 		return err
 	}
 	return nil
@@ -104,25 +106,25 @@ func (a *app) setupMiddleware() {
 func (a *app) setupServices() {
 	coordinatorService, err := service.NewCoordinatorService(a.context, a.mux, "coordinator", a.registry)
 	if err != nil {
-		log.Fatalf("coordinator service create failed: %v\n", err)
+		log.Printf("coordinator service create failed: %v\n", err)
 	}
 	a.grpcServices = append(a.grpcServices, coordinatorService.GRPCService)
 
 	orderService, err := service.NewOrderService(a.context, a.mux, "order-service", a.registry)
 	if err != nil {
-		log.Fatalf("order service create failed: %v\n", err)
+		log.Printf("order service create failed: %v\n", err)
 	}
 	a.grpcServices = append(a.grpcServices, orderService.GRPCService)
 
 	menuService, err := service.NewMenuService(a.context, a.mux, "menu-service", a.registry)
 	if err != nil {
-		log.Fatalf("menu service create failed: %v\n", err)
+		log.Printf("menu service create failed: %v\n", err)
 	}
 	a.grpcServices = append(a.grpcServices, menuService.GRPCService)
 
 	stockService, err := service.NewStockService(a.context, a.mux, "stock-service", a.registry)
 	if err != nil {
-		log.Fatalf("stock service create failed: %v\n", err)
+		log.Printf("stock service create failed: %v\n", err)
 	}
 	a.grpcServices = append(a.grpcServices, stockService.GRPCService)
 }
