@@ -31,62 +31,24 @@ var (
 	debug = common.EnvString("DEBUG", "false") == "true"
 )
 
-func checkTopicExists(adminClient *kafka.AdminClient, topic string) bool {
-	for {
-		metadata, err := adminClient.GetMetadata(&topic, false, 5000)
-		if err != nil {
-			log.Printf("Error fetching metadata: %v\n", err)
-			time.Sleep(time.Second)
-			continue
-		}
-
-		for t := range metadata.Topics {
-			fmt.Println("topic:", t)
-			if t == topic {
-				return true
-			}
-		}
-
-		break
+func initialKafka() (*kafka.AdminClient, error) {
+	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"bootstrap.servers": kafkaBrokers,
+	})
+	if err != nil {
+		log.Printf("failed to create admin client: %s\n", err)
+		return nil, err
 	}
 
-	return false
-}
-
-func setupKafkaTopics(adminClient *kafka.AdminClient) error {
 	topics := strings.Split(kafkaTopics, ",")
-
-	topicSpecifications := []kafka.TopicSpecification{}
-	for _, topic := range topics {
-		if checkTopicExists(adminClient, topic) {
-			log.Println("topic", topic, "exists")
-			continue
-		}
-
-		topicSpecifications = append(topicSpecifications, kafka.TopicSpecification{
-			Topic:             topic,
-			NumPartitions:     3,
-			ReplicationFactor: 3,
-		})
+	if err := common.SetupKafkaTopics(adminClient, topics); err != nil {
+		return nil, err
 	}
 
-	log.Println("topics specification:", topicSpecifications)
-
-	if len(topicSpecifications) > 0 {
-		_, err := adminClient.CreateTopics(context.Background(), topicSpecifications)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return adminClient, nil
 }
 
-func initialKafka(adminClient *kafka.AdminClient) error {
-	return setupKafkaTopics(adminClient)
-}
-
-func startKafkaConsumer() {
+func startKafkaConsumer() (*kafka.Consumer, error) {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  kafkaBrokers,
 		"group.id":           kafkaConsumerGroupId,
@@ -95,31 +57,35 @@ func startKafkaConsumer() {
 	})
 	if err != nil {
 		log.Printf("failed to create Kafka consumer: %v\n", err)
-		return
+		return nil, err
 	}
 
 	topics := strings.Split(kafkaTopics, ",")
 	err = consumer.SubscribeTopics(topics, nil)
 	if err != nil {
 		log.Printf("failed to subscribe to topics: %v\n", err)
-		return
+		return nil, err
 	}
 
 	fmt.Println("Kafka consumer started...")
-	for {
-		msg, err := consumer.ReadMessage(100 * time.Millisecond)
-		if err != nil {
-			log.Printf("failed to read message: %v\n", err)
-			continue
-		}
+	go func() {
+		for {
+			msg, err := consumer.ReadMessage(100 * time.Millisecond)
+			if err != nil {
+				log.Printf("failed to read message: %v\n", err)
+				continue
+			}
 
-		// consume event (replace it to other function)
-		fmt.Printf("Consumed event from topic: %s: key = %-10s value = %s\n", *msg.TopicPartition.Topic, string(msg.Key), string(msg.Value))
-		_, err = consumer.CommitMessage(msg)
-		if err != nil {
-			log.Printf("failed to commit message: %v\n", err)
+			// consume event (replace it to other function)
+			fmt.Printf("Consumed event from topic: %s: key = %-10s value = %s\n", *msg.TopicPartition.Topic, string(msg.Key), string(msg.Value))
+			_, err = consumer.CommitMessage(msg)
+			if err != nil {
+				log.Printf("failed to commit message: %v\n", err)
+			}
 		}
-	}
+	}()
+
+	return consumer, nil
 }
 
 func main() {
@@ -156,18 +122,17 @@ func main() {
 	}()
 
 	// start kafka consumer
-	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBrokers,
-	})
+	adminClient, err := initialKafka()
 	if err != nil {
-		log.Printf("failed to create admin client: %s\n", err)
-	} else {
-		if err := initialKafka(adminClient); err != nil {
-			log.Printf("error in initial Kafka: %v\n", err)
-		} else {
-			go startKafkaConsumer()
-		}
+		log.Fatalf("Kafka initial error: %v\n", err)
 	}
+	defer adminClient.Close()
+
+	consumer, err := startKafkaConsumer()
+	if err != nil {
+		log.Fatalf("Kafka consumer error: %v", err)
+	}
+	defer consumer.Close()
 
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", serviceHost, servicePort))
 	if err != nil {
