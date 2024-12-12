@@ -2,6 +2,10 @@ package consumer
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
@@ -25,30 +29,55 @@ func NewKafkaConsumer(brokers, id string, topics []string) (*KafkaConsumer, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to subscribe Kafka topics: %v", err)
 	}
+	fmt.Println("Kafka consumer subscribing topics:", topics)
 
 	kafkaConsumer := &KafkaConsumer{
 		client: consumer,
 	}
-	fmt.Println("Kafka consumer started...")
 
 	return kafkaConsumer, nil
 }
 
-func (c *KafkaConsumer) Consume() (*ConsumedMessage, error) {
-	msg, err := c.client.ReadMessage(-1)
-	if err != nil {
-		return nil, err
+func (c *KafkaConsumer) Start(handlers map[string]EventHandler) error {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
+	run := true
+	for run {
+		select {
+		case <-signalChan:
+			fmt.Println("Consumer shutting down...")
+			run = false
+		default:
+			msg, err := c.client.ReadMessage(-1)
+			if err != nil {
+				log.Printf("Kafka consume error: %v", err)
+				break
+			}
+
+			EventMessage := EventMessage{
+				Topic:     *msg.TopicPartition.Topic,
+				Partition: msg.TopicPartition.Partition,
+				Offset:    int64(msg.TopicPartition.Offset),
+				Key:       msg.Key,
+				Value:     msg.Value,
+				Timestamp: msg.Timestamp,
+			}
+
+			err = handlers[*msg.TopicPartition.Topic](EventMessage)
+			if err != nil {
+				log.Println(err)
+				break
+			}
+
+			_, err = c.client.CommitMessage(msg)
+			if err != nil {
+				log.Printf("message commit error: %v", err)
+			}
+		}
 	}
 
-	consumedMessage := &ConsumedMessage{
-		Topic:     *msg.TopicPartition.Topic,
-		Partition: msg.TopicPartition.Partition,
-		Offset:    int64(msg.TopicPartition.Offset),
-		Key:       msg.Key,
-		Value:     msg.Value,
-	}
-
-	return consumedMessage, nil
+	return nil
 }
 
 func (c *KafkaConsumer) Close() error {

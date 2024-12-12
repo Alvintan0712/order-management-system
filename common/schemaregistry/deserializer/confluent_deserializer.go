@@ -12,11 +12,11 @@ type ConfluentDeserializer struct {
 	Deserializer *avrov2.Deserializer
 }
 
-func NewDeserializer(srclient *srclient.ConfluentSRClient, serdeType int) (*ConfluentDeserializer, error) {
+func NewConfluentDeserializer(srclient *srclient.ConfluentSRClient, serdeType int) (*ConfluentDeserializer, error) {
 	config := avrov2.NewDeserializerConfig()
 	deser, err := avrov2.NewDeserializer(srclient.Client, serdeType, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create confluent deserializer failed: %v", err)
 	}
 
 	confluentDeserializer := &ConfluentDeserializer{

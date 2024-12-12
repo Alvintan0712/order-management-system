@@ -6,13 +6,16 @@ import (
 	"log"
 	"net"
 	"os"
-	"strings"
 	"time"
 
 	"example.com/oms/common"
+	"example.com/oms/common/broker/consumer"
+	"example.com/oms/common/broker/topic"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"example.com/oms/common/schemaregistry/deserializer"
+	"example.com/oms/common/schemaregistry/srclient"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
 	_ "github.com/joho/godotenv/autoload"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -28,65 +31,10 @@ var (
 	kafkaConsumerGroupId = common.EnvString("KAFKA_CONSUMER_GROUP_ID", "stock-consumer-group")
 	kafkaTopics          = common.EnvString("KAFKA_TOPICS", "")
 
+	schemaRegistryURL = common.EnvString("SCHEMA_REGISTRY_URL", "http://localhost:8081")
+
 	debug = common.EnvString("DEBUG", "false") == "true"
 )
-
-func initKafkaAdminClient() (*kafka.AdminClient, error) {
-	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{
-		"bootstrap.servers": kafkaBrokers,
-	})
-	if err != nil {
-		log.Printf("failed to create admin client: %s\n", err)
-		return nil, err
-	}
-
-	topics := strings.Split(kafkaTopics, ",")
-	if err := common.SetupKafkaTopics(adminClient, topics); err != nil {
-		return nil, err
-	}
-
-	return adminClient, nil
-}
-
-func startKafkaConsumer() (*kafka.Consumer, error) {
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  kafkaBrokers,
-		"group.id":           kafkaConsumerGroupId,
-		"auto.offset.reset":  "earliest",
-		"enable.auto.commit": false,
-	})
-	if err != nil {
-		log.Printf("failed to create Kafka consumer: %v\n", err)
-		return nil, err
-	}
-
-	topics := strings.Split(kafkaTopics, ",")
-	err = consumer.SubscribeTopics(topics, nil)
-	if err != nil {
-		log.Printf("failed to subscribe to topics: %v\n", err)
-		return nil, err
-	}
-
-	fmt.Println("Kafka consumer started...")
-	go func() {
-		for {
-			msg, err := consumer.ReadMessage(100 * time.Millisecond)
-			if err != nil {
-				log.Printf("failed to read message: %v\n", err)
-				continue
-			}
-
-			// consume event (replace it to other function)
-			fmt.Printf("Consumed event from topic: %s: key = %-10s value = %s\n", *msg.TopicPartition.Topic, string(msg.Key), string(msg.Value))
-			_, err = consumer.CommitMessage(msg)
-			if err != nil {
-				log.Printf("failed to commit message: %v\n", err)
-			}
-		}
-	}()
-
-	return consumer, nil
-}
 
 func main() {
 	ctx := context.Background()
@@ -121,18 +69,23 @@ func main() {
 		}
 	}()
 
-	adminClient, err := initKafkaAdminClient()
+	confluentSRClient, err := srclient.NewConfluentSRClient(schemaRegistryURL)
 	if err != nil {
-		log.Fatalf("Kafka initial error: %v\n", err)
+		log.Fatal(err)
 	}
-	defer adminClient.Close()
 
-	// start kafka consumer
-	consumer, err := startKafkaConsumer()
+	confluentDeserializer, err := deserializer.NewConfluentDeserializer(confluentSRClient, serde.ValueSerde)
 	if err != nil {
-		log.Fatalf("Kafka consumer error: %v", err)
+		log.Fatal(err)
 	}
-	defer consumer.Close()
+
+	topics := []string{
+		topic.MenuCreated,
+	}
+	kafkaConsumer, err := consumer.NewKafkaConsumer(kafkaBrokers, kafkaConsumerGroupId, topics)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", serviceHost, servicePort))
 	if err != nil {
@@ -153,6 +106,10 @@ func main() {
 	}
 
 	NewGRPCHandler(grpcServer, service)
+	consumerHandler := NewConsumerHandler(confluentDeserializer, service)
+	if err := kafkaConsumer.Start(consumerHandler.Handlers); err != nil {
+		log.Fatal(err)
+	}
 
 	log.Printf("Stock service %s started at %s:%s\n", serviceId, serviceHost, servicePort)
 

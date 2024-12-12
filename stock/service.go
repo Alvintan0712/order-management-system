@@ -21,7 +21,6 @@ type StockService interface {
 
 type service struct {
 	repository rp.Repository[*pb.Stock]
-
 	menuClient pb.MenuServiceClient
 }
 
@@ -32,8 +31,12 @@ func NewService(ctx context.Context, repository rp.Repository[*pb.Stock], regist
 	}
 
 	menuClient := pb.NewMenuServiceClient(conn)
+	stockService := &service{
+		repository: repository,
+		menuClient: menuClient,
+	}
 
-	return &service{repository: repository, menuClient: menuClient}, nil
+	return stockService, nil
 }
 
 func (s *service) AddStock(ctx context.Context, r *pb.AddStockRequest) (*pb.Stock, error) {

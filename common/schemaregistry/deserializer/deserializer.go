@@ -1,5 +1,5 @@
 package deserializer
 
 type Deserializer interface {
-	Deserialize() error
+	Deserialize(topic string, payload []byte, value interface{}) error
 }
