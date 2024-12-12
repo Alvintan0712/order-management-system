@@ -17,6 +17,11 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_controller_1/logs:/kafka/data/logs
+      - ./volumes/kafka_controller_1/meta:/kafka/data/meta
 
   kafka-controller-2:
     image: apache/kafka:latest
@@ -29,6 +34,11 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_controller_2/logs:/kafka/data/logs
+      - ./volumes/kafka_controller_2/meta:/kafka/data/meta
 
   kafka-controller-3:
     image: apache/kafka:latest
@@ -41,6 +51,11 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_controller_3/logs:/kafka/data/logs
+      - ./volumes/kafka_controller_3/meta:/kafka/data/meta
 
   kafka-broker-1:
     image: apache/kafka:latest
@@ -57,6 +72,11 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_broker_1/logs:/kafka/data/logs
+      - ./volumes/kafka_broker_1/meta:/kafka/data/meta
     depends_on:
       - kafka-controller-1
       - kafka-controller-2
@@ -77,6 +97,11 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_broker_2/logs:/kafka/data/logs
+      - ./volumes/kafka_broker_2/meta:/kafka/data/meta
     depends_on:
       - kafka-controller-1
       - kafka-controller-2
@@ -97,10 +122,49 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-controller-1:9093,2@kafka-controller-2:9093,3@kafka-controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_DIRS: /kafka/data/logs
+      KAFKA_METADATA_LOG_DIR: /kafka/data/meta
+    volumes:
+      - ./volumes/kafka_broker_3/logs:/kafka/data/logs
+      - ./volumes/kafka_broker_3/meta:/kafka/data/meta
     depends_on:
       - kafka-controller-1
       - kafka-controller-2
       - kafka-controller-3
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    container_name: schema-registry
+    ports:
+      - "8081:8081"
+    environment:
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=PLAINTEXT://kafka-broker-1:19092,PLAINTEXT://kafka-broker-2:29092,PLAINTEXT://kafka-broker-3:39092
+      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
+      - SCHEMA_REGISTRY_SCHEMA_STORE_DIR=/schema-registry/data
+    volumes:
+      - ./volumes/schema_registry/data:/schema-registry/data
+    depends_on:
+      - kafka-broker-1
+      - kafka-broker-2
+      - kafka-broker-3
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:latest
+    container_name: control-center
+    ports:
+      - "9021:9021"
+    environment:
+      - CONTROL_CENTER_BOOTSTRAP_SERVERS=kafka-broker-1:19092,kafka-broker-2:29092,kafka-broker-3:39092
+      - CONTROL_CENTER_REST_LISTENERS=http://0.0.0.0:9021
+      - CONTROL_CENTER_SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - CONTROL_CENTER_CONTROL=http://schema-registry:8081
+      - CONTROL_CENTER_REPLICATION_FACTOR=3
+    depends_on:
+      - kafka-broker-1
+      - kafka-broker-2
+      - kafka-broker-3
+      - schema-registry
 
   coordinator:
     build:
@@ -159,7 +223,12 @@ services:
       - SERVICE_NAME=menu-service
       - SERVICE_HOST=menu
       - SERVICE_PORT=8082
-      - DEBUG=true
+      - KAFKA_BROKERS=kafka-broker-1:19092,kafka-broker-2:29092,kafka-broker-3:39092
+      - KAFKA_TOPICS=test-topic
+      - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+      - DEBUG=false
+    volumes:
+      - ./menu/database/menu.db:/app/menu/database/menu.db
     depends_on:
       - consul
       - kafka-broker-1
@@ -180,6 +249,8 @@ services:
       - KAFKA_BROKERS=kafka-broker-1:19092,kafka-broker-2:29092,kafka-broker-3:39092
       - KAFKA_TOPICS=test-topic
       - DEBUG=false
+    volumes:
+      - ./stock/database/stock.db:/app/stock/database/stock.db
     depends_on:
       - consul
       - kafka-broker-1

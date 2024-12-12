@@ -2,9 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 
-	pb "example.com/oms/common/api"
+	"example.com/oms/common/api/avro"
+	pb "example.com/oms/common/api/protobuf"
+	"example.com/oms/common/broker/producer"
+	"example.com/oms/common/broker/topic"
 	rp "example.com/oms/common/repository"
+	"example.com/oms/common/schemaregistry/serializer"
 	"github.com/google/uuid"
 )
 
@@ -18,10 +23,16 @@ type MenuService interface {
 
 type service struct {
 	repository rp.Repository[*pb.MenuItem]
+	producer   producer.Producer
+	serializer serializer.Serializer
 }
 
-func NewService(repository rp.Repository[*pb.MenuItem]) *service {
-	return &service{repository: repository}
+func NewService(repository rp.Repository[*pb.MenuItem], producer producer.Producer, serializer serializer.Serializer) *service {
+	return &service{
+		repository: repository,
+		producer:   producer,
+		serializer: serializer,
+	}
 }
 
 func (s *service) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemRequest) (*pb.MenuItem, error) {
@@ -31,7 +42,27 @@ func (s *service) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemReques
 		UnitPrice: r.UnitPrice,
 		Currency:  r.Currency,
 	}
-	s.repository.Create(ctx, menu)
+	err := s.repository.Create(ctx, menu)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entity: %v", err)
+	}
+
+	event := &avro.MenuCreatedEvent{
+		Id:        menu.Id,
+		Name:      menu.Name,
+		UnitPrice: int(menu.UnitPrice),
+		Currency:  menu.Currency,
+	}
+	payload, err := s.serializer.Serialize(topic.MenuCreated, event)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize payload: %v", err)
+	}
+
+	err = s.producer.Produce(topic.MenuCreated, []byte(menu.Id), payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to produce event: %v", err)
+	}
+
 	return menu, nil
 }
 

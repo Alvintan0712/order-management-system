@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	pb "example.com/oms/common/api"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	"example.com/oms/gateway/handler"
@@ -14,7 +13,7 @@ import (
 
 type MenuService struct {
 	GRPCService
-	client  *pb.MenuServiceClient
+	// client  *pb.MenuServiceClient
 	handler *handler.MenuHandler
 }
 
@@ -24,7 +23,7 @@ func NewMenuService(ctx context.Context, mux *http.ServeMux, name string, gatewa
 		return nil, err
 	}
 
-	client := pb.NewMenuServiceClient(conn)
+	// client := pb.NewMenuServiceClient(conn)
 	handler := handler.NewMenuHandler(mux, conn)
 
 	if debug {
@@ -44,7 +43,7 @@ func NewMenuService(ctx context.Context, mux *http.ServeMux, name string, gatewa
 			Registry:   gatewayRegistry,
 			Connection: conn,
 		},
-		client:  &client,
+		// client:  &client,
 		handler: handler,
 	}
 

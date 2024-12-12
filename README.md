@@ -29,6 +29,17 @@
 2. cd database directory in each services.
 3. Execute `sqlite3 <service name>.db < script.sql`
 
+### Protobuf API
+
+1. `cd common`
+2. `make` to generate protobuf go files.
+
+### Work Directory
+
+```sh
+go work init ./common ./coordinator ./gateway ./kitchen ./menu ./order ./payment ./stock
+```
+
 ### Application
 
 ## Architecture Design
@@ -41,6 +52,8 @@
 - Air (hot reload)
 - Consul (Service Discovery)
 - gRPC
+- Kafka
+- Schema Registry (Avro format)
 
 # References
 

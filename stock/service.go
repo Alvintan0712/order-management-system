@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	rp "example.com/oms/common/repository"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 	"google.golang.org/grpc"
 )
 

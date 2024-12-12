@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 )
 
 type OrderService interface {

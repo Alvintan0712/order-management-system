@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 )
 
 type grpcHandler struct {

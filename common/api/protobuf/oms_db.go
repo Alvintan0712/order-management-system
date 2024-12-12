@@ -1,4 +1,4 @@
-package api
+package protobuf
 
 type MenuItemDB struct {
 	Id        string `db:"id"`

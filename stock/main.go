@@ -31,7 +31,7 @@ var (
 	debug = common.EnvString("DEBUG", "false") == "true"
 )
 
-func initialKafka() (*kafka.AdminClient, error) {
+func initKafkaAdminClient() (*kafka.AdminClient, error) {
 	adminClient, err := kafka.NewAdminClient(&kafka.ConfigMap{
 		"bootstrap.servers": kafkaBrokers,
 	})
@@ -121,13 +121,13 @@ func main() {
 		}
 	}()
 
-	// start kafka consumer
-	adminClient, err := initialKafka()
+	adminClient, err := initKafkaAdminClient()
 	if err != nil {
 		log.Fatalf("Kafka initial error: %v\n", err)
 	}
 	defer adminClient.Close()
 
+	// start kafka consumer
 	consumer, err := startKafkaConsumer()
 	if err != nil {
 		log.Fatalf("Kafka consumer error: %v", err)

@@ -1,0 +1,11 @@
+{
+    "namespace": "example.com.common.api.avro",
+    "name": "MenuCreatedEvent",
+    "type": "record",
+    "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "name", "type": "string" },
+        { "name": "unitPrice", "type": "int" },
+        { "name": "currency", "type": "string" }
+    ]
+}

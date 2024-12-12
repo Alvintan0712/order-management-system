@@ -16,7 +16,6 @@ import (
 )
 
 type Config struct {
-	httpAddr   string
 	consulAddr string
 	Id         string
 	Name       string
@@ -53,7 +52,7 @@ func NewApp(config *Config) *app {
 }
 
 func (a *app) Listen() error {
-	log.Printf("Starting %s HTTP server at %s", a.config.Id, a.config.httpAddr)
+	log.Printf("Starting %s HTTP server at :%s", a.config.Id, a.config.Port)
 	port := fmt.Sprintf(":%v", a.config.Port)
 	if err := http.ListenAndServe(port, a.handler); err != nil {
 		return err

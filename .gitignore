@@ -7,3 +7,6 @@ go.work.sum
 
 # database file
 *.db
+
+# docker container volumes file
+/volumes

@@ -9,8 +9,12 @@ import (
 	"time"
 
 	"example.com/oms/common"
+	"example.com/oms/common/broker/producer"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
+	"example.com/oms/common/schemaregistry/serializer"
+	"example.com/oms/common/schemaregistry/srclient"
+	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
 	_ "github.com/joho/godotenv/autoload"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -21,6 +25,10 @@ var (
 	serviceHost = common.EnvString("SERVICE_HOST", "127.0.0.1")
 	servicePort = common.EnvString("SERVICE_PORT", "8082")
 	serviceName = common.EnvString("SERVICE_NAME", "menu-service")
+
+	kafkaBrokers = common.EnvString("KAFKA_BROKERS", "localhost:9092")
+
+	schemaRegistryURL = common.EnvString("SCHEMA_REGISTRY_URL", "http://localhost:8081")
 
 	debug = common.EnvString("DEBUG", "false") == "true"
 )
@@ -58,6 +66,22 @@ func main() {
 		}
 	}()
 
+	kafkaProducer, err := producer.NewKafkaProducer(kafkaBrokers, "menu-service")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+	defer kafkaProducer.Close()
+
+	srclient, err := srclient.NewConfluentSRClient(schemaRegistryURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	confluentSerializer, err := serializer.NewConfluentSerializer(srclient, serde.ValueSerde)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Printf("Start listen %s:%s\n", serviceHost, servicePort)
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%s", serviceHost, servicePort))
 	if err != nil {
@@ -72,7 +96,7 @@ func main() {
 		log.Fatalf("repository create failed: %v\n", err)
 	}
 
-	service := NewService(repository)
+	service := NewService(repository, kafkaProducer, confluentSerializer)
 	NewGRPCHandler(grpcServer, service)
 
 	log.Printf("Menu service %s started at %s:%s\n", serviceId, serviceHost, servicePort)

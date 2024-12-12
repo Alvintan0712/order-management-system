@@ -19,7 +19,6 @@ var (
 
 func main() {
 	config := &Config{
-		httpAddr:   httpAddr,
 		consulAddr: consulAddr,
 		Name:       serviceName,
 		Host:       serviceHost,

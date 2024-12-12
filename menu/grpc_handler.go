@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
 
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -20,6 +21,7 @@ func NewGRPCHandler(grpcServer *grpc.Server, service MenuService) {
 }
 
 func (h *grpcHandler) CreateMenuItem(ctx context.Context, r *pb.CreateMenuItemRequest) (*pb.MenuItem, error) {
+	log.Println("menu handler: create menu item")
 	menu, err := h.service.CreateMenuItem(ctx, r)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package api
+package protobuf
 
 func (item *MenuItem) ToDB() *MenuItemDB {
 	return &MenuItemDB{

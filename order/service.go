@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"example.com/oms/common"
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 )
 
 type service struct {

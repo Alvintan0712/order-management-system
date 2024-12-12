@@ -2,9 +2,9 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-option go_package = "example.com/oms/common/api";
+option go_package = "example.com/oms/common/api/protobuf";
 
-package api;
+package protobuf;
 
 // Order
 message Order {

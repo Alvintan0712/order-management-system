@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"example.com/oms/common"
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +24,7 @@ func NewMenuHandler(mux *http.ServeMux, conn *grpc.ClientConn) *MenuHandler {
 }
 
 func (h *MenuHandler) registerRoutes(mux *http.ServeMux) {
-	// mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
+	mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
 	mux.HandleFunc("GET /v1/menu/{id}", h.GetMenuItem)
 	mux.HandleFunc("PUT /v1/menu/{id}", h.UpdateMenuItem)
 	mux.HandleFunc("DELETE /v1/menu/{id}", h.DeleteMenuItem)
@@ -31,6 +32,8 @@ func (h *MenuHandler) registerRoutes(mux *http.ServeMux) {
 }
 
 func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
+	log.Println("menu handler: create menu item")
+
 	var req pb.CreateMenuItemRequest
 	if err := common.ReadJSON(r, &req); err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())

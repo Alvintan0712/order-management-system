@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"example.com/oms/common"
-	pb "example.com/oms/common/api"
+	pb "example.com/oms/common/api/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +23,7 @@ func NewCoordinatorHandler(mux *http.ServeMux, conn *grpc.ClientConn) *Coordinat
 }
 
 func (h *CoordinatorHandler) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
+	// mux.HandleFunc("POST /v1/menu", h.CreateMenuItem)
 }
 
 func (h *CoordinatorHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {

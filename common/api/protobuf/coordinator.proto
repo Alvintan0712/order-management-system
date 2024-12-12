@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "example.com/oms/common/api";
+option go_package = "example.com/oms/common/api/protobuf";
 
-package api;
+package protobuf;
 
 message CreateMenuItemWithStockRequest {
     string name = 1;
