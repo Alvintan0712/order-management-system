@@ -32,7 +32,7 @@
 ### Protobuf API
 
 1. `cd common`
-2. `make` to generate protobuf go files.
+2. `make` to generate protobuf and avro go files.
 
 ### Work Directory
 

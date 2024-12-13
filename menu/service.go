@@ -81,7 +81,12 @@ func (s *service) UpdateMenuItem(ctx context.Context, r *pb.UpdateMenuItemReques
 }
 
 func (s *service) DeleteMenuItem(ctx context.Context, id string) error {
-	return s.repository.Delete(ctx, id)
+	err := s.repository.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) ListMenuItems(ctx context.Context) ([]*pb.MenuItem, error) {

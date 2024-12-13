@@ -1,0 +1,2 @@
+# Ignore all generated go files
+*.go
