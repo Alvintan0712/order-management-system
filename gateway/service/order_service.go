@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	pb "example.com/oms/common/api/protobuf"
 	"example.com/oms/common/discovery"
 	"example.com/oms/common/discovery/consul"
 	"example.com/oms/gateway/handler"
@@ -14,7 +13,6 @@ import (
 
 type OrderService struct {
 	GRPCService
-	client  *pb.OrderServiceClient
 	handler *handler.OrderHandler
 }
 
@@ -24,7 +22,6 @@ func NewOrderService(ctx context.Context, mux *http.ServeMux, name string, gatew
 		return nil, err
 	}
 
-	client := pb.NewOrderServiceClient(conn)
 	handler := handler.NewOrderHandler(mux, conn)
 
 	if debug {
@@ -44,7 +41,6 @@ func NewOrderService(ctx context.Context, mux *http.ServeMux, name string, gatew
 			Registry:   gatewayRegistry,
 			Connection: conn,
 		},
-		client:  &client,
 		handler: handler,
 	}
 

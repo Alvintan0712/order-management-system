@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"example.com/oms/common"
@@ -32,8 +31,6 @@ func (h *MenuHandler) registerRoutes(mux *http.ServeMux) {
 }
 
 func (h *MenuHandler) CreateMenuItem(w http.ResponseWriter, r *http.Request) {
-	log.Println("menu handler: create menu item")
-
 	var req pb.CreateMenuItemRequest
 	if err := common.ReadJSON(r, &req); err != nil {
 		common.WriteError(w, http.StatusBadRequest, err.Error())

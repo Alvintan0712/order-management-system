@@ -13,7 +13,6 @@ import (
 
 type MenuService struct {
 	GRPCService
-	// client  *pb.MenuServiceClient
 	handler *handler.MenuHandler
 }
 
@@ -23,7 +22,6 @@ func NewMenuService(ctx context.Context, mux *http.ServeMux, name string, gatewa
 		return nil, err
 	}
 
-	// client := pb.NewMenuServiceClient(conn)
 	handler := handler.NewMenuHandler(mux, conn)
 
 	if debug {
@@ -43,7 +41,6 @@ func NewMenuService(ctx context.Context, mux *http.ServeMux, name string, gatewa
 			Registry:   gatewayRegistry,
 			Connection: conn,
 		},
-		// client:  &client,
 		handler: handler,
 	}
 
